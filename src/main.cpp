@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #include "camera.h"
 #include <SFML/Graphics.hpp>
@@ -138,7 +139,56 @@ int main() {
         //
         // Use SOFT_LIMIT_PERCENT and HARD_LIMIT_PERCENT to parameterize the green and red
         // line positions.
-        camera.setCameraCenter({player.position.x, WINDOW_HEIGHT * 0.5f});
+        sf::Vector2f cam = camera.getCameraCenter();
+        sf::Vector2f playerX = sf::Vector2f({
+            camera.worldToWindow(player.position).x,
+            0.f
+        });
+        float player_delta = playerX.x - WINDOW_WIDTH/2.f;
+        sf::Vector2f delta;
+        if( playerX.x < leftSoftLine.getPosition().x ) {
+            if( playerX.x < leftHardLine.getPosition().x ) {
+                // Get difference in player position vs boundary
+                delta = sf::Vector2f(
+                    playerX.x - leftHardLine.getPosition().x,
+                    0.f
+                );
+                // Apply difference to camera
+                camera.translateWindow(delta);
+            }
+            else {
+                // Get softened difference in player position vs boundary
+                float line_delta = leftSoftLine.getPosition().x - WINDOW_WIDTH/2.f;
+                delta = sf::Vector2f({
+                    SOFT_CAMERA_ALPHA * (player_delta - line_delta),
+                    0.f
+                });
+                // Apply difference to camera
+                camera.translateWindow(delta);
+            }
+        }
+        else if( playerX.x > rightSoftLine.getPosition().x ) {
+            if( playerX.x > rightHardLine.getPosition().x ) {
+                // Get difference in player position vs boundary
+                delta = sf::Vector2f(
+                    playerX.x - rightHardLine.getPosition().x,
+                    0.f
+                );
+                // Apply difference to camera
+                camera.translateWindow(delta);
+            }
+            else {
+                // Get softened difference in player position vs boundary
+                float line_delta = rightSoftLine.getPosition().x - WINDOW_WIDTH/2.f;
+                delta = sf::Vector2f({
+                    SOFT_CAMERA_ALPHA * (player_delta - line_delta),
+                    0.f
+                });
+                // Apply difference to camera
+                camera.translateWindow(delta);
+            }
+        }
+        // camera.setCameraCenter({player.position.x, WINDOW_HEIGHT * 0.5f});
 
         worldView.setCenter(camera.getCameraCenter());
         window.clear(sf::Color::Black);
